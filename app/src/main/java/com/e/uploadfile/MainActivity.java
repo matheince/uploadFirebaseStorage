@@ -20,10 +20,12 @@ import android.widget.Toast;
 
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.OnProgressListener;
+import com.google.firebase.storage.StorageMetadata;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.StorageTask;
 import com.google.firebase.storage.UploadTask;
@@ -43,7 +45,7 @@ public class MainActivity extends AppCompatActivity {
     private StorageReference mStorageRef;
     private DatabaseReference mDatabaseRef;
 
-    private StorageTask mUploadTask;
+    private StorageTask mUploadStorageTask;
 
 
     @Override
@@ -59,7 +61,7 @@ public class MainActivity extends AppCompatActivity {
         mProgressBar = findViewById(R.id.Progress_bar);
 
         mStorageRef = FirebaseStorage.getInstance().getReference("upload_images");
-        mDatabaseRef = FirebaseDatabase.getInstance().getReference("upload_images");
+        mDatabaseRef = FirebaseDatabase.getInstance().getReference("upload");
 
 
 
@@ -72,7 +74,7 @@ public class MainActivity extends AppCompatActivity {
         mButtonUpload.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if(mUploadTask != null && mUploadTask.isInProgress()){
+                if(mUploadStorageTask != null && mUploadStorageTask.isInProgress()){
                     Toast.makeText(MainActivity.this,"Uploading...",Toast.LENGTH_SHORT).show();
                 }else {
                     uploadFile();
@@ -85,6 +87,7 @@ public class MainActivity extends AppCompatActivity {
         mTextViewShowUploads.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                openImagesActivity();
 
             }
         });
@@ -117,9 +120,9 @@ public class MainActivity extends AppCompatActivity {
     }
     private void uploadFile(){
         if(mImageUri != null){
-            StorageReference fileReference = mStorageRef.child(System.currentTimeMillis()
+            final StorageReference fileImageRef  = mStorageRef.child(System.currentTimeMillis()
             + "." + getFileExtension(mImageUri));
-            mUploadTask = fileReference.putFile(mImageUri).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+            mUploadStorageTask = fileImageRef.putFile(mImageUri).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {  // 원래 형식 <UploadTask.TaskSnapshot>
                 @Override
                 public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
                     Handler handler = new Handler();
@@ -129,10 +132,18 @@ public class MainActivity extends AppCompatActivity {
                             mProgressBar.setProgress(0);
                         }
                     },500);
-                    Toast.makeText(MainActivity.this,"Upload successful",Toast.LENGTH_LONG).show();
-                    Upload upload = new Upload(mEditTextFileName.getText().toString().trim(),taskSnapshot.getMetadata().toString());
+
+
+
                     String uploadId = mDatabaseRef.push().getKey();
+
+
+                    Upload upload = new Upload();
+                    upload.setmName(mEditTextFileName.getText().toString().trim());
+                    upload.setmImageUrl(mImageUri.toString());
+
                     mDatabaseRef.child(uploadId).setValue(upload);
+                    Toast.makeText(MainActivity.this,"Upload successful",Toast.LENGTH_LONG).show();
 
                 }
             }).addOnFailureListener(new OnFailureListener() {
@@ -159,6 +170,11 @@ public class MainActivity extends AppCompatActivity {
         }else {
             Toast.makeText(this, "No file selected",Toast.LENGTH_SHORT).show();
         }
+
+    }
+    private void openImagesActivity(){
+        Intent intent = new Intent(this,ImagesActivity.class);
+        startActivity(intent);
 
     }
 }

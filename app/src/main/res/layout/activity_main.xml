@@ -59,7 +59,7 @@
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
         android:layout_marginStart="25dp"
-        android:layout_marginBottom="32dp"
+        android:layout_marginBottom="15dp"
         android:layout_toEndOf="@+id/button_upload"
         android:gravity="center"
 
