@@ -18,6 +18,7 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.bumptech.glide.Glide;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
@@ -78,6 +79,7 @@ public class MainActivity extends AppCompatActivity {
                     Toast.makeText(MainActivity.this,"Uploading...",Toast.LENGTH_SHORT).show();
                 }else {
                     uploadFile();
+
                 }
 
 
@@ -91,6 +93,7 @@ public class MainActivity extends AppCompatActivity {
 
             }
         });
+
 
 
     }
@@ -108,7 +111,8 @@ public class MainActivity extends AppCompatActivity {
         if(requestCode == PICK_IMAGE_REQUEST && resultCode == RESULT_OK && data != null && data.getData() != null){
             mImageUri = data.getData();
 
-            Picasso.with(this).load(mImageUri).into(mImageView);
+            Glide.with(this).load(mImageUri).circleCrop().into(mImageView);
+            //Picasso.with(this).load(mImageUri).into(mImageView);
 
         }
     }
@@ -132,16 +136,8 @@ public class MainActivity extends AppCompatActivity {
                             mProgressBar.setProgress(0);
                         }
                     },500);
-
-
-
                     String uploadId = mDatabaseRef.push().getKey();
-
-
-                    Upload upload = new Upload();
-                    upload.setmName(mEditTextFileName.getText().toString().trim());
-                    upload.setmImageUrl(mImageUri.toString());
-
+                    Upload upload = new Upload(mEditTextFileName.getText().toString().trim(),mImageUri.toString());
                     mDatabaseRef.child(uploadId).setValue(upload);
                     Toast.makeText(MainActivity.this,"Upload successful",Toast.LENGTH_LONG).show();
 

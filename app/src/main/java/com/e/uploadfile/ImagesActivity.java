@@ -6,6 +6,8 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.os.Bundle;
+import android.view.View;
+import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import com.google.firebase.database.DataSnapshot;
@@ -17,11 +19,12 @@ import com.google.firebase.database.ValueEventListener;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ImagesActivity extends AppCompatActivity {
+public class ImagesActivity extends AppCompatActivity implements ImageAdapter.OnItemClickListener {
     private RecyclerView mRecyclerView;
     private ImageAdapter mImageAdapter;
     private DatabaseReference mDatabaseRef;
     private List<Upload> mUploads;
+    private ProgressBar mProgressCircle;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -32,27 +35,53 @@ public class ImagesActivity extends AppCompatActivity {
         mRecyclerView.setHasFixedSize(true);
         mRecyclerView.setLayoutManager(new LinearLayoutManager(this));
 
+        mProgressCircle = findViewById(R.id.progress_circle);
         mUploads = new ArrayList<>();
         mDatabaseRef = FirebaseDatabase.getInstance().getReference("upload");
         mDatabaseRef.addValueEventListener(new ValueEventListener() {
+            Upload upload = new Upload();
+
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+
                 for (DataSnapshot postSnapshot : dataSnapshot.getChildren()){
-                    Upload upload = postSnapshot.getValue(Upload.class);
+                    upload = postSnapshot.getValue(Upload.class);
                     mUploads.add(upload);
 
                 }
                 mImageAdapter = new ImageAdapter(ImagesActivity.this, mUploads);
                 mRecyclerView.setAdapter(mImageAdapter);
+                mImageAdapter.setOnItemClickListener(ImagesActivity.this);
+
+                mProgressCircle.setVisibility(View.INVISIBLE);
+
+
             }
 
             @Override
             public void onCancelled(@NonNull DatabaseError databaseError) {
                 Toast.makeText(ImagesActivity.this,databaseError.getMessage(),Toast.LENGTH_SHORT).show();
+                mProgressCircle.setVisibility(View.INVISIBLE);
             }
         });
 
 
 
+    }
+
+    @Override
+    public void onItemClick(int position) {
+        Toast.makeText(this,"Normal click at position: " + position,Toast.LENGTH_SHORT).show();
+
+    }
+
+    @Override
+    public void onWhateverClick(int position) {
+        Toast.makeText(this,"Whatever click at position: " + position,Toast.LENGTH_SHORT).show();
+    }
+
+    @Override
+    public void onDeleteClick(int position) {
+        Toast.makeText(this,"Delete click at position: " + position,Toast.LENGTH_SHORT).show();
     }
 }
