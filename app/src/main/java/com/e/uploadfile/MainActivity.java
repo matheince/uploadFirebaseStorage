@@ -9,6 +9,7 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
+import android.util.Log;
 import android.view.View;
 import android.webkit.MimeTypeMap;
 import android.widget.Button;
@@ -19,6 +20,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
+import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
@@ -43,6 +45,7 @@ public class MainActivity extends AppCompatActivity {
     private ProgressBar mProgressBar;
 
     private Uri mImageUri;
+    private Uri downloadUri;
     private StorageReference mStorageRef;
     private DatabaseReference mDatabaseRef;
 
@@ -64,8 +67,6 @@ public class MainActivity extends AppCompatActivity {
         mStorageRef = FirebaseStorage.getInstance().getReference("upload_images");
         mDatabaseRef = FirebaseDatabase.getInstance().getReference("upload");
 
-
-
         mButtonChooseImage.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -81,9 +82,6 @@ public class MainActivity extends AppCompatActivity {
                     uploadFile();
 
                 }
-
-
-
             }
         });
         mTextViewShowUploads.setOnClickListener(new View.OnClickListener() {
@@ -93,9 +91,6 @@ public class MainActivity extends AppCompatActivity {
 
             }
         });
-
-
-
     }
     private void openFileChooser(){
         Intent intent = new Intent();
@@ -126,9 +121,10 @@ public class MainActivity extends AppCompatActivity {
         if(mImageUri != null){
             final StorageReference fileImageRef  = mStorageRef.child(System.currentTimeMillis()
             + "." + getFileExtension(mImageUri));
-            mUploadStorageTask = fileImageRef.putFile(mImageUri).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {  // 원래 형식 <UploadTask.TaskSnapshot>
+            mUploadStorageTask = fileImageRef.putFile(mImageUri).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
                 @Override
                 public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+
                     Handler handler = new Handler();
                     handler.postDelayed(new Runnable() {
                         @Override
@@ -136,16 +132,25 @@ public class MainActivity extends AppCompatActivity {
                             mProgressBar.setProgress(0);
                         }
                     },500);
-                    String uploadId = mDatabaseRef.push().getKey();
-                    Upload upload = new Upload(mEditTextFileName.getText().toString().trim(),mImageUri.toString());
-                    mDatabaseRef.child(uploadId).setValue(upload);
-                    Toast.makeText(MainActivity.this,"Upload successful",Toast.LENGTH_LONG).show();
+                    fileImageRef.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
+                        @Override
+                        public void onSuccess(Uri uri) {
+                            Upload upload = new Upload(mEditTextFileName.getText().toString().trim(),uri.toString());
+                            String uploadId = mDatabaseRef.push().getKey();
+                            mDatabaseRef.child(uploadId).setValue(upload);
+                            Toast.makeText(MainActivity.this,"Upload successful",Toast.LENGTH_LONG).show();
+                            mEditTextFileName.setText("");
+
+                        }
+                    });
+
 
                 }
+
             }).addOnFailureListener(new OnFailureListener() {
                 @Override
                 public void onFailure(@NonNull Exception e) {
-                    Toast.makeText(MainActivity.this,e.getMessage(),Toast.LENGTH_SHORT).show();
+                    Toast.makeText(MainActivity.this,e.getMessage(),Toast.LENGTH_LONG).show();
 
 
 
@@ -154,15 +159,11 @@ public class MainActivity extends AppCompatActivity {
                 @Override
                 public void onProgress(UploadTask.TaskSnapshot taskSnapshot) {
                     double progress = (100.0 * taskSnapshot.getBytesTransferred() / taskSnapshot.getTotalByteCount());
+
+                    System.out.println("Upload is " + progress + "% done");
                     mProgressBar.setProgress((int) progress);
-
-
-
                 }
             });
-
-
-
         }else {
             Toast.makeText(this, "No file selected",Toast.LENGTH_SHORT).show();
         }

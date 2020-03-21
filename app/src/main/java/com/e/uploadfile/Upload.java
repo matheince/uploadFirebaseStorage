@@ -1,8 +1,14 @@
 package com.e.uploadfile;
 
+import com.google.firebase.database.Exclude;
+
 public class Upload {
     private String mName;
     private String mImageUrl;
+
+    //MenuItem Implement... code
+    private String mKey;
+    //MenuItem Implement... code
 
     public Upload(){
         //empty constructor needed
@@ -15,6 +21,7 @@ public class Upload {
 
         this.mName = mName;
         this.mImageUrl = mImageUrl;
+        //this.mKey = mKey;
     }
 
     public String getmName() {
@@ -32,4 +39,17 @@ public class Upload {
     public void setmImageUrl(String mImageUrl) {
         this.mImageUrl = mImageUrl;
     }
+
+
+    //MenuItem Implement... code
+    @Exclude
+    public String getKey() {
+        return mKey;
+    }
+
+    @Exclude
+    public void setKey(String Key) {
+        mKey = Key;
+    }
+    //MenuItem Implement... code
 }
